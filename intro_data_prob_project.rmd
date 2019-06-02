@@ -156,7 +156,7 @@ landlocked_eh_proportion <- landlocked_excellenthlth/landlocked_total
 cnt_excellenthlth <- nrow(filter(coastal_no_territories, genhlth == "Excellent"))
 cnt_eh_proportion <- cnt_excellenthlth/cnt_total
 ```
-
+  
 Proportions of people reporting Excellent health in coastal, landlocked, and coastal excluding territories states:
 ```{r echo=FALSE}
 show(coastal_eh_proportion)
