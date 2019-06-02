@@ -1,0 +1,121 @@
+---
+title: "Exploring the BRFSS data"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+### Load data
+
+Make sure your data and R Markdown files are in the same directory. When loaded
+your data file will be called `brfss2013`. Delete this note when before you submit 
+your work. 
+
+```{r load-data}
+load("brfss2013.RData")
+```
+
+
+
+* * *
+
+## Part 1: Data
+
+
+* * *
+
+## Part 2: Research questions
+
+**Research quesion 1:**
+
+**Research quesion 2:**
+
+**Research quesion 3:**
+
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
+button (green button with orange arrow) above. Make sure that your code is visible
+in the project you submit. Delete this note when before you submit your work.
+
+**Research quesion 1:**
+
+### Do people in coastal states have better health than those in landlocked states?
+
+According to Wikipedia, there are 25 states and territories of the USA that have a costal line, and the rest 28 including the District of Columbia are 'landlocked'. So, the states are almost equally divided which makes it interesting to compare. My personal belief is that proximity to ocean makes people happier but happiness is something hard to evaluate, so I'll be focusing on people's health instead. 
+
+*Step 1* 
+We want to take a closer look at the states data first to see if there are any input errors.
+```{r}
+unique(brfss2013$X_state)
+```
+
+There are rows with '0' and '80' values among other states. We can checked them manually to find that those values are in two cases only. We can filter them out but 2 cases out of half a million won't make any impact on the results.
+
+```{r}
+brfss2013 %>%
+  filter(X_state != "0", X_state != "80") %>%
+  group_by(X_state) %>%
+  summarise(count = n())
+```
+
+*Step 2*
+We need to create a list (vector in R terms) of coastal states first. In the data frame brfss2013 we create a new binary variable 'coastal_state'. Then, we compare the variable X_state with the vector to determine whether the state is coastal and set coastal_state to TRUE if it is, or FALSE if it isn't. 
+
+```{r}
+coastal_states_vector <- c("Alabama","Alaska","California","Connecticut","Delaware","Florida","Georgia","Guam","Hawaii","Louisiana","Maine","Maryland","Massachusetts","Mississippi","New Hampshire","New Jersey","New York","North Carolina","Oregon","Puerto Rico","Rhode Island","South Carolina","Texas","Virginia","Washington")
+
+# which(cs_lines <- brfss2013$X_state %in% coastal_states_vector)
+
+brfss2013 <- brfss2013 %>%
+  mutate(coastal_state = ifelse(X_state %in% coastal_states_vector, TRUE, FALSE)) 
+```
+
+*Step 3*
+Select people with good health. This data frame has two variables indicating self-reported health condition: 'General Health' (genhlth) with 5 levels from poor to excellent, and a calculated binary variable 'Adults with good or better health' (_rfhlth) grouping people in two distinct groups (Fair or Poor health, and Good or Better health). We're interested in the latter variable as it fits our needs perfectly.
+
+```{r}
+brfss2013 %>%
+  group_by(coastal_state, X_rfhlth) %>%
+  summarise((count = n()))
+
+ggplot(brfss2013, mapping = aes(x = X_rfhlth)) +
+  geom_bar(stat = "count")
+
+brfss2013 %>%
+  filter(coastal_state == FALSE) %>%
+  filter(!is.na(X_rfhlth)) %>%
+  ggplot(aes(x = X_rfhlth)) +
+  geom_bar(stat = "count")
+```
+
+
+
+**Research quesion 2:**
+
+```{r}
+
+```
+
+
+
+**Research quesion 3:**
+
+```{r}
+
+```
+
