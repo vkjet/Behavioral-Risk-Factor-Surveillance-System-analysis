@@ -18,10 +18,6 @@ library(dplyr)
 
 ### Load data
 
-Make sure your data and R Markdown files are in the same directory. When loaded
-your data file will be called `brfss2013`. Delete this note when before you submit 
-your work. 
-
 ```{r load-data}
 load("brfss2013.RData")
 ```
@@ -39,6 +35,10 @@ load("brfss2013.RData")
 
 **Research quesion 1:**
 
+### Do people in coastal states have better health than those in landlocked states?
+
+According to Wikipedia, there are 25 states and territories of the USA that have a coastal line, and the rest 28 including the District of Columbia are 'landlocked'. So, the states are almost equally divided which makes it interesting to compare. My personal belief is that proximity to the ocean makes people happier but happiness is something hard to evaluate, so I'll be focusing on people's health instead.
+
 **Research quesion 2:**
 
 **Research quesion 3:**
@@ -54,17 +54,16 @@ in the project you submit. Delete this note when before you submit your work.
 
 **Research quesion 1:**
 
-### Do people in coastal states have better health than those in landlocked states?
+#### Do people in coastal states have better health than those in landlocked states?
 
-According to Wikipedia, there are 25 states and territories of the USA that have a costal line, and the rest 28 including the District of Columbia are 'landlocked'. So, the states are almost equally divided which makes it interesting to compare. My personal belief is that proximity to ocean makes people happier but happiness is something hard to evaluate, so I'll be focusing on people's health instead. 
+*Step 1*   
+We want to take a closer look at the X_state variable first to see if there are any input errors.
 
-*Step 1* 
-We want to take a closer look at the states data first to see if there are any input errors.
 ```{r}
 unique(brfss2013$X_state)
 ```
 
-There are rows with '0' and '80' values among other states. We can checked them manually to find that those values are in two cases only. We can filter them out but 2 cases out of half a million won't make any impact on the results.
+There are rows with '0' and '80' values among other states. We can check them manually to find that those values are in two cases only. We can filter them out but 2 cases out of half a million won't make any impact on the results.
 
 ```{r}
 brfss2013 %>%
@@ -73,7 +72,7 @@ brfss2013 %>%
   summarise(count = n())
 ```
 
-*Step 2*
+*Step 2*  
 We need to create a list (vector in R terms) of coastal states first. In the data frame brfss2013 we create a new binary variable 'coastal_state'. Then, we compare the variable X_state with the vector to determine whether the state is coastal and set coastal_state to TRUE if it is, or FALSE if it isn't. 
 
 ```{r}
@@ -85,7 +84,7 @@ brfss2013 <- brfss2013 %>%
   mutate(coastal_state = ifelse(X_state %in% coastal_states_vector, TRUE, FALSE)) 
 ```
 
-*Step 3*
+*Step 3*  
 Select people with good health. This data frame has two variables indicating self-reported health condition: 'General Health' (genhlth) with 5 levels from poor to excellent, and a calculated binary variable 'Adults with good or better health' (_rfhlth) grouping people in two distinct groups (Fair or Poor health, and Good or Better health). We're interested in the latter variable as it fits our needs perfectly.
 
 ```{r}
@@ -93,16 +92,80 @@ brfss2013 %>%
   group_by(coastal_state, X_rfhlth) %>%
   summarise((count = n()))
 
+# This bar plot shows the frequency distribution of 'Adults with good or better health' variable.
 ggplot(brfss2013, mapping = aes(x = X_rfhlth)) +
   geom_bar(stat = "count")
 
-brfss2013 %>%
-  filter(coastal_state == FALSE) %>%
-  filter(!is.na(X_rfhlth)) %>%
+# Now, we create a subset of data consisting of only the coastal states and territories. All NA's and no responses are excluded.
+coastal <- filter(brfss2013, coastal_state == TRUE, !is.na(X_rfhlth)) 
+  coastal_total <- nrow(coastal) 
+  coastal_goodhealth <- nrow(filter(coastal, X_rfhlth == "Good or Better Health"))
+  coastal_gh_proportion <- coastal_goodhealth/coastal_total
+
+# Bar plot of the frequency distribution for coastal states only    
+coastal %>%
   ggplot(aes(x = X_rfhlth)) +
   geom_bar(stat = "count")
+
+## Proportion of people with good or better health in coastal states and territories
+show(coastal_gh_proportion)
+  
+# Similarly, we create a subset of landlocked states.
+landlocked <- filter(brfss2013, coastal_state == FALSE, !is.na(X_rfhlth))
+  landlocked_total <- nrow(landlocked) 
+  landlocked_goodhealth <- nrow(filter(landlocked, X_rfhlth == "Good or Better Health"))
+  landlocked_gh_proportion <- landlocked_goodhealth/landlocked_total
+
+# Bar plot of the frequency distribution for landlocked states only
+landlocked %>%
+  ggplot(aes(x = X_rfhlth)) +
+  geom_bar(stat = "count")  
+  
+## Proportion of people with good or better health in landlocked states  
+show(landlocked_gh_proportion)
+
+
 ```
 
+We can see that the proportion of people with good or better health in landlocked states is higher: 81.6% in landlocked states and 79.7% in coastal ones. This means that the average person in a coastal state has no better health than one in a landlocked state.
+
+However, health care in the US territories like Puerto Rico and Guam may differ from one in main states, so we can exclude them from the analysis to see if the proportion changes. 
+
+```{r}
+coastal_no_territories <- filter(coastal, X_state != "Guam", X_state != "Puerto Rico")  
+  cnt_total <- nrow(coastal_no_territories)
+  cnt_goodhealth <- nrow(filter(coastal_no_territories, X_rfhlth == "Good or Better Health"))
+  cnt_gh_proportion <- cnt_goodhealth/cnt_total
+  
+## Proportion of people with good or better health in states without Guam and Puerto Rico
+  show(cnt_gh_proportion)
+```
+
+In fact, the proportion of people with good or better health in coastal states excluding Guam and Puerto Rico slightly increased and got even closer to one in landlocked states (80.2% and 81.6% respectively).
+
+*Step 4*  
+We can also check if an average person in a coastal state has higher chance of reporting an Excellent health.
+
+```{r}
+coastal_excellenthlth <- nrow(filter(coastal, genhlth == "Excellent"))
+coastal_eh_proportion <- coastal_excellenthlth/coastal_total
+
+landlocked_excellenthlth <- nrow(filter(landlocked, genhlth == "Excellent"))
+landlocked_eh_proportion <- landlocked_excellenthlth/landlocked_total
+
+cnt_excellenthlth <- nrow(filter(coastal_no_territories, genhlth == "Excellent"))
+cnt_eh_proportion <- cnt_excellenthlth/cnt_total
+```
+
+Proportions of people reporting Excellent health in coastal, landlocked, and coastal excluding territories states:
+```{r echo=FALSE}
+show(coastal_eh_proportion)
+show(landlocked_eh_proportion) 
+show(cnt_eh_proportion)
+```
+
+
+Our analysis shows that the average person in a coastal state has no better health than one in a landlocked state. So the answer to the first question is **NO**.  
 
 
 **Research quesion 2:**
