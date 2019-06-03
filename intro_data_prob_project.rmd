@@ -41,8 +41,13 @@ According to Wikipedia, there are 25 states and territories of the USA that have
 
 **Research quesion 2:**
 
+### Do smokers drink soda and alcohol more often than non-smokers?
+
 **Research quesion 3:**
 
+### Does a smoker have a higher chance to live alone?
+
+That would be fun to know if there's an association between living alone and smoking. If there's an association, would that mean that smoking leads you to live alone or vice versa? Not really. Association doesn't mean causation. For the sake of this test I suspect that being a smoker (explanatory variable) might affect your tendency of being the only person in your household or living with somebody (response variable).    
 
 * * *
 
@@ -178,7 +183,91 @@ Our analysis shows that the average person in a coastal state has no better heal
 
 **Research quesion 3:**
 
+#### Does a smoker have a higher chance to live alone?
+
+*Step 1*  
+We need to define variables of interest first. The variable 'numadult' represents the number of adults in the household. This is a discrete variable with numerical values. Another variable of interest is 'smokday2' which shows the frequency of days currently smoking. 
+
+Numadult takes the values between 1 and 45 in this data frame with lots of NAs that we would need to exclude from the analysis. We are interested in the cases with 1 adult in the household.
+
+Also, we should only consider the households with one adult and no children in them - the categorical variable 'X_chldcnt', Computed Number Of Children In Household, is handy here. 
 ```{r}
+brfss2013 %>%
+  filter(X_chldcnt == "No children in household", !is.na(numadult)) %>%
+  group_by(numadult) %>%
+  summarise(n())
+```
+
+This var takes values from Every Day to Some days to Not at all. For this test, we would consider person a smoker if s/he smokes every day or some days. There's a calculated value in this data frame that counts all smokers and non-smokers for us, X_rfsmok3. We'll be using this variable in future analysis.
+```{r}
+brfss2013 %>%
+  group_by(smokday2) %>%
+  summarise(n())
+
+brfss2013 %>%
+  filter(!is.na(smokday2), !is.na(numadult), X_chldcnt == "No children in household") %>%
+  ggplot(aes(x = smokday2, y = numadult)) +
+  geom_count()
+```
+  
+*The count plot above shows the size of a household and smoker status with the number of cases*  
+
+
+*Step 2*  
+Here's the summary showing the relationship between the smokers (X_rfsmok3) and number of adults in the household (numadult).
+
+```{r}
+brfss2013 %>%
+  filter(!is.na(X_rfsmok3), !is.na(numadult), X_chldcnt == "No children in household") %>%
+  group_by(X_rfsmok3, numadult) %>%
+  summarise(n())
+```
+We're only interested in households with 1 adult with no children. Those households with more than one adult should be combined into one group. We then need to create additional variable 'home_alone' consisting of 2 values: TRUE and FALSE.
+
+```{r}
+brfss2013 <- brfss2013 %>%
+  filter(!is.na(numadult), !is.na(X_chldcnt)) %>%
+  mutate(home_alone = ifelse(numadult == 1, ifelse(X_chldcnt == "No children in household", TRUE, FALSE), FALSE)) 
+```
+
+The following code calculate the values needed for the contingency table.
+
+```{r}
+# Create a contingency table with two categorical vars:
+smokers_tab1 <- with(brfss2013,
+  table(X_rfsmok3, home_alone))
+
+# Show table
+smokers_tab1
+
+# Show percents
+prop.table(smokers_tab1)*100
+
+# Total for smokers/non-smokers
+rowSums(smokers_tab1)
+
+# Total for alone/not-alone
+colSums(smokers_tab1)
 
 ```
 
+
+*Step 3*  
+We can now find if proportion of **smokers living alone** exceeds the proportions of **non-smokers living alone**.
+
+```{r}
+prop.table(smokers_tab1, margin = 1)*100
+```
+
+Indeed, we can see that 34.35% of smokers live alone against 32.12% of non-smokers living alone. 
+
+Taking the other way around, we can check if a random person being **the only member of his or her household** has a higher chance of **being a smoker**, than has a person living with somebody. Since we already have all of the values from a contingency table, it's quite easy to calculate:
+
+```{r}
+prop.table(smokers_tab1, margin = 2)*100
+```
+
+Again, we can see a higher chance of living alone and being a smoker, than living with somebody and being a smoker: 14.86% and 13.63% respectively.
+
+*Conclusion*
+We found out that an average smoker has 2.23% higher chance of living alone, than non-smoker. Also, an average person livig alone has 1.23% higher chance of being a smoker than one living with somebody. This makes sense but doesn't mean that these two factors are really connected. There might be a confounding variable affecting both of them instead. Anyway, **the answer to the question 3 is YES**.
