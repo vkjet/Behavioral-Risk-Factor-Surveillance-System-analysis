@@ -97,39 +97,48 @@ brfss2013 %>%
   group_by(coastal_state, X_rfhlth) %>%
   summarise((count = n()))
 
-# This bar plot shows the frequency distribution of 'Adults with good or better health' variable.
 ggplot(brfss2013, mapping = aes(x = X_rfhlth)) +
   geom_bar(stat = "count")
+```
+  
+*This bar plot shows the frequency distribution of 'Adults with good or better health' variable*  
 
-# Now, we create a subset of data consisting of only the coastal states and territories. All NA's and no responses are excluded.
+Now, we create a subset of data consisting of only the coastal states and territories. All NA's and no responses are excluded.
+```{r}
 coastal <- filter(brfss2013, coastal_state == TRUE, !is.na(X_rfhlth)) 
   coastal_total <- nrow(coastal) 
   coastal_goodhealth <- nrow(filter(coastal, X_rfhlth == "Good or Better Health"))
   coastal_gh_proportion <- coastal_goodhealth/coastal_total
 
-# Bar plot of the frequency distribution for coastal states only    
 coastal %>%
   ggplot(aes(x = X_rfhlth)) +
   geom_bar(stat = "count")
-
-## Proportion of people with good or better health in coastal states and territories
-show(coastal_gh_proportion)
+```
   
-# Similarly, we create a subset of landlocked states.
+*Bar plot of the frequency distribution for coastal states only*
+
+Proportion of people with good or better health in coastal states and territories:
+```{r}
+show(coastal_gh_proportion)
+```
+  
+Similarly, we create a subset of landlocked states.
+```{r}
 landlocked <- filter(brfss2013, coastal_state == FALSE, !is.na(X_rfhlth))
   landlocked_total <- nrow(landlocked) 
   landlocked_goodhealth <- nrow(filter(landlocked, X_rfhlth == "Good or Better Health"))
   landlocked_gh_proportion <- landlocked_goodhealth/landlocked_total
 
-# Bar plot of the frequency distribution for landlocked states only
 landlocked %>%
   ggplot(aes(x = X_rfhlth)) +
-  geom_bar(stat = "count")  
-  
-## Proportion of people with good or better health in landlocked states  
+  geom_bar(stat = "count")
+```
+
+*Bar plot of the frequency distribution for landlocked states only*  
+
+Proportion of people with good or better health in landlocked states:
+```{r}
 show(landlocked_gh_proportion)
-
-
 ```
 
 We can see that the proportion of people with good or better health in landlocked states is higher: 81.6% in landlocked states and 79.7% in coastal ones. This means that the average person in a coastal state has no better health than one in a landlocked state.
@@ -141,8 +150,10 @@ coastal_no_territories <- filter(coastal, X_state != "Guam", X_state != "Puerto 
   cnt_total <- nrow(coastal_no_territories)
   cnt_goodhealth <- nrow(filter(coastal_no_territories, X_rfhlth == "Good or Better Health"))
   cnt_gh_proportion <- cnt_goodhealth/cnt_total
-  
-## Proportion of people with good or better health in states without Guam and Puerto Rico
+```
+
+Proportion of people with good or better health in states without Guam and Puerto Rico:
+```{r}
   show(cnt_gh_proportion)
 ```
 
@@ -171,8 +182,9 @@ show(cnt_eh_proportion)
 
 **Conclusion**    
 Our analysis shows that the average person in a coastal state has no better health than one in a landlocked state. So the answer to the first question is **NO**.  
-
-
+***  
+  
+    
 **Research question 2:**
 
 #### Do you drink more soda than your grandpa?
@@ -203,8 +215,10 @@ Calculate new variable - sodas_per_day.
 brfss2013 <- brfss2013 %>%
   mutate(sodas_per_day =
     ifelse (is.na(ssbsugar), NA, ifelse (ssbsugar == 0, 0, ifelse (0<(ssbsugar - 300), (ssbsugar - 300)/30, ifelse (0<(ssbsugar - 200), (ssbsugar - 200)/7, ssbsugar-100)))))
+```
 
-# The summary statistics for the new variable:
+The summary statistics for the new variable:
+```{r}
 brfss2013 %>%
   filter(!is.na(sodas_per_day)) %>%
   summarise(soda_median = median(sodas_per_day), soda_mean = mean(sodas_per_day), sodas_min = min(sodas_per_day), sodas_max = max(sodas_per_day), IQR = IQR(sodas_per_day), count = n())
@@ -243,7 +257,10 @@ brfss2013 %>%
   filter(!is.na(sodas_per_day), !is.na(X_age_g)) %>%
   ggplot(aes(x = X_age_g, y = sodas_per_day)) +
   geom_boxplot(outlier.color = "red", outlier.size = 1, notch = FALSE, varwidth = FALSE, na.rm = TRUE)
+```
 
+
+```{r echo=FALSE}
 # brfss2013 %>%
 #   filter(!is.na(sodas_per_day), !is.na(X_age_g), sodas_per_day != 0) %>%
 #   ggplot(aes(x = X_age_g, y = sodas_per_day)) +
@@ -259,13 +276,17 @@ brfss2013 %>%
   ggplot(aes(x = X_age_g, y = sodas_per_day)) +
   geom_boxplot(outlier.color = "red", outlier.size = 1, notch = FALSE, varwidth = FALSE, na.rm = TRUE)
 ```
+  
 *This boxplot shows the distribution within the age groups with extreme outliers cut-off*  
   
 Data shows that '18-24' group has the highest median number of drinks per day (0.29 per day, or almost 9 soda drinks per month), and both '55-64' and '65+' has the lowest (zero soda drinks per day). The rest of the age groups show the values somewhere in between. The trend line is certainly downward. 
 
 **Conclusion**    
-It's clear now that soda consumption has a strong negative correlation with age. People consume less soda as they become older. The answer to question 2 depends on your age, but there's a good chance that **if you drink any soda and you're younger than 55, you drink more soda than your grandpa**.  
-
+It's clear now that soda consumption has a strong negative correlation with age. People consume less soda as they become older. The answer to question 2 depends on your age, but **there's a good chance that if you drink any soda and you're younger than 55, you drink more soda than your grandpa**.  
+***
+  
+  
+    
 **Research question 3:**
 
 #### Does a smoker have a higher chance to live alone?
