@@ -28,41 +28,41 @@ load("brfss2013.RData")
 
 ## Part 1: Data
 
+The BRFSS data set represents the data collected by calling people either at landline or cellular phones. People were selected randomly and not assigned. We deal with a retrospective observational study with random sampling and with no random assignment here. Which means that we cannot make causal conclusions based on this data. However, we can use this data for making correlation statements, and the results of our findings can be generalized to the whole population of people who has either landline or cellular phone and is older than 18 years.  
 
 * * *
 
 ## Part 2: Research questions
 
-**Research quesion 1:**
+**Research question 1:**
 
 ### Do people in coastal states have better health than those in landlocked states?
 
-According to Wikipedia, there are 25 states and territories of the USA that have a coastal line, and the rest 28 including the District of Columbia are 'landlocked'. So, the states are almost equally divided which makes it interesting to compare. My personal belief is that proximity to the ocean makes people happier but happiness is something hard to evaluate, so I'll be focusing on people's health instead.
+According to Wikipedia, there are 25 states and territories of the USA that have a coastal line, and the rest 28 including the District of Columbia are 'landlocked'. So, the states are almost equally divided which makes it interesting to compare. My personal belief is that proximity to the ocean makes people happier but happiness is something hard to evaluate, so we'll be focusing on people's health instead.
 
-**Research quesion 2:**
+**Research question 2:**
 
-### Do smokers drink soda and alcohol more often than non-smokers?
+### Do you drink more soda than your grandpa?
 
-**Research quesion 3:**
+We often blame the younger generation for not sticking to a healthier lifestyle. But do the youngsters really as bad as older folks think? Let's find out whether consuming soda and pop has anything to do with the age.
+
+**Research question 3:**
 
 ### Does a smoker have a higher chance to live alone?
 
-That would be fun to know if there's an association between living alone and smoking. If there's an association, would that mean that smoking leads you to live alone or vice versa? Not really. Association doesn't mean causation. For the sake of this test I suspect that being a smoker (explanatory variable) might affect your tendency of being the only person in your household or living with somebody (response variable).    
+That would be fun to know if there's an association between living alone and smoking. If there's an association, would that mean that smoking leads you to live alone or vice versa? Not really. Association doesn't mean causation. For the sake of this test, I suspect that being a smoker (explanatory variable) might affect your tendency of being the only person in your household or living with somebody (response variable).    
 
 * * *
 
 ## Part 3: Exploratory data analysis
 
-NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
-button (green button with orange arrow) above. Make sure that your code is visible
-in the project you submit. Delete this note when before you submit your work.
 
-**Research quesion 1:**
+**Research question 1:**
 
 #### Do people in coastal states have better health than those in landlocked states?
 
 *Step 1*   
-We want to take a closer look at the X_state variable first to see if there are any input errors.
+We want to take a closer look at the **X_state** variable first to see if there are any input errors.
 
 ```{r}
 unique(brfss2013$X_state)
@@ -78,7 +78,7 @@ brfss2013 %>%
 ```
 
 *Step 2*  
-We need to create a list (vector in R terms) of coastal states first. In the data frame brfss2013 we create a new binary variable 'coastal_state'. Then, we compare the variable X_state with the vector to determine whether the state is coastal and set coastal_state to TRUE if it is, or FALSE if it isn't. 
+We need to create a list (vector in R terms) of coastal states first. In the data frame brfss2013 we create a new binary variable **'coastal_state'**. Then, we compare the variable X_state with the vector to determine whether the state is coastal and set coastal_state to TRUE if it is, or FALSE if it isn't. 
 
 ```{r}
 coastal_states_vector <- c("Alabama","Alaska","California","Connecticut","Delaware","Florida","Georgia","Guam","Hawaii","Louisiana","Maine","Maryland","Massachusetts","Mississippi","New Hampshire","New Jersey","New York","North Carolina","Oregon","Puerto Rico","Rhode Island","South Carolina","Texas","Virginia","Washington")
@@ -90,7 +90,7 @@ brfss2013 <- brfss2013 %>%
 ```
 
 *Step 3*  
-Select people with good health. This data frame has two variables indicating self-reported health condition: 'General Health' (genhlth) with 5 levels from poor to excellent, and a calculated binary variable 'Adults with good or better health' (_rfhlth) grouping people in two distinct groups (Fair or Poor health, and Good or Better health). We're interested in the latter variable as it fits our needs perfectly.
+Select people with good health. This data frame has two variables indicating self-reported health condition: 'General Health' (genhlth) with 5 levels from poor to excellent, and a calculated binary variable 'Adults with good or better health' **(_rfhlth)** grouping people in two distinct groups (Fair or Poor health, and Good or Better health). We're interested in the latter variable as it fits our needs perfectly.
 
 ```{r}
 brfss2013 %>%
@@ -149,7 +149,7 @@ coastal_no_territories <- filter(coastal, X_state != "Guam", X_state != "Puerto 
 In fact, the proportion of people with good or better health in coastal states excluding Guam and Puerto Rico slightly increased and got even closer to one in landlocked states (80.2% and 81.6% respectively).
 
 *Step 4*  
-We can also check if an average person in a coastal state has higher chance of reporting an Excellent health.
+We can also check if an average person in a coastal state has a higher chance of reporting 'Excellent' health.
 
 ```{r}
 coastal_excellenthlth <- nrow(filter(coastal, genhlth == "Excellent"))
@@ -169,28 +169,113 @@ show(landlocked_eh_proportion)
 show(cnt_eh_proportion)
 ```
 
-
+**Conclusion**    
 Our analysis shows that the average person in a coastal state has no better health than one in a landlocked state. So the answer to the first question is **NO**.  
 
 
-**Research quesion 2:**
+**Research question 2:**
+
+#### Do you drink more soda than your grandpa?
+
+We would need to work with two variables here: **X_age_g** - Imputed Age In Six Groups, and **ssbsugar** - How Often Do You Drink Regular Soda Or Pop?
+
+*Step 1*  
+We need to check the variables for errors and NAs first.
 
 ```{r}
+brfss2013 %>%
+  group_by(X_age_g) %>%
+  summarise(n())
 
+brfss2013 %>%
+  group_by(ssbsugar) %>%
+  summarise(n())
+```
+
+For X_age_g, we deal with a categorical ordinal variable. It's not a surprise that the most populous category presented is people aged 65 or older as it's not limited by 10-years range as other groups. Note that the first category (18-24) is the least populous for the same reason - the range here only spans 7 years. There are just a few cases with NAs, but we'd need to exclude them anyway. 
+
+The second variable, ssbsugar, is a little bit confusing as it shows the frequencies of consuming soda drinks in different formats. Respondents could answer times per day, week, or month. We should decode the values based on the following encoding rules: the first number denotes numbers of times per day (1), week (2), or month (3). The remaining numbers represent the counts of times. Let's transfer all of these values to a unified format - soda drinks per day - and save it as a new variable. 
+
+*Step 2*  
+Calculate new variable - sodas_per_day. 
+
+```{r}
+brfss2013 <- brfss2013 %>%
+  mutate(sodas_per_day =
+    ifelse (is.na(ssbsugar), NA, ifelse (ssbsugar == 0, 0, ifelse (0<(ssbsugar - 300), (ssbsugar - 300)/30, ifelse (0<(ssbsugar - 200), (ssbsugar - 200)/7, ssbsugar-100)))))
+
+# The summary statistics for the new variable:
+brfss2013 %>%
+  filter(!is.na(sodas_per_day)) %>%
+  summarise(soda_median = median(sodas_per_day), soda_mean = mean(sodas_per_day), sodas_min = min(sodas_per_day), sodas_max = max(sodas_per_day), IQR = IQR(sodas_per_day), count = n())
+```
+
+*Step 3*  
+It's time to find out the distributions of soda drinkers within the age groups. 
+
+```{r}
+brfss2013 %>%
+  filter(!is.na(sodas_per_day),  !is.na(X_age_g)) %>%
+  group_by(X_age_g) %>%
+  summarise(soda_median = round(median(sodas_per_day), 6), soda_mean = round(mean(sodas_per_day), 3), sodas_min = round(min(sodas_per_day), 3), soda_max = max(sodas_per_day), IQR = round(IQR(sodas_per_day), 3), soda_sd = round(sd(sodas_per_day), 3), count = n())
+```
+
+We can see unusual similarities in the values of the median for some groups (like 0 for two oldest groups). In fact, it's nothing weird. This means that at least 50% of older people don't consume soda at all. Good to know!  
+
+```{r echo=FALSE}
+# getmode <- function(v) {
+#    uniqv <- unique(v)
+#    uniqv[which.max(tabulate(match(v, uniqv)))]
+# }
+# 
+# soda_mode_list <- brfss2013 %>%
+#   filter(!is.na(sodas_per_day) ) %>%
+#   select(sodas_per_day)
+#   
+# soda_mode <- getmode(soda_mode_list)
 ```
 
 
+We can now represent the distributions within the age groups visually. The boxplot fits this need perfectly.
 
-**Research quesion 3:**
+```{r}
+brfss2013 %>%
+  filter(!is.na(sodas_per_day), !is.na(X_age_g)) %>%
+  ggplot(aes(x = X_age_g, y = sodas_per_day)) +
+  geom_boxplot(outlier.color = "red", outlier.size = 1, notch = FALSE, varwidth = FALSE, na.rm = TRUE)
+
+# brfss2013 %>%
+#   filter(!is.na(sodas_per_day), !is.na(X_age_g), sodas_per_day != 0) %>%
+#   ggplot(aes(x = X_age_g, y = sodas_per_day)) +
+#   geom_violin()
+```
+*This boxplot shows the distribution of soda drinkers within the age groups*  
+  
+There is a number of outliers that affect the scale of the plot and make it hard to read. We can cut the most extreme outliers (over 5 soda drinks per day) without skewing the distribution too much.
+
+```{r}
+brfss2013 %>%
+  filter(!is.na(sodas_per_day), !is.na(X_age_g),  sodas_per_day <= 5) %>%
+  ggplot(aes(x = X_age_g, y = sodas_per_day)) +
+  geom_boxplot(outlier.color = "red", outlier.size = 1, notch = FALSE, varwidth = FALSE, na.rm = TRUE)
+```
+*This boxplot shows the distribution within the age groups with extreme outliers cut-off*  
+  
+Data shows that '18-24' group has the highest median number of drinks per day (0.29 per day, or almost 9 soda drinks per month), and both '55-64' and '65+' has the lowest (zero soda drinks per day). The rest of the age groups show the values somewhere in between. The trend line is certainly downward. 
+
+**Conclusion**    
+It's clear now that soda consumption has a strong negative correlation with age. People consume less soda as they become older. The answer to question 2 depends on your age, but there's a good chance that **if you drink any soda and you're younger than 55, you drink more soda than your grandpa**.  
+
+**Research question 3:**
 
 #### Does a smoker have a higher chance to live alone?
 
 *Step 1*  
-We need to define variables of interest first. The variable 'numadult' represents the number of adults in the household. This is a discrete variable with numerical values. Another variable of interest is 'smokday2' which shows the frequency of days currently smoking. 
+We need to define variables of interest first. The variable **'numadult'** represents the number of adults in the household. This is a discrete variable with numerical values. Another variable of interest is **'smokday2'** which shows the frequency of days currently smoking. 
 
-Numadult takes the values between 1 and 45 in this data frame with lots of NAs that we would need to exclude from the analysis. We are interested in the cases with 1 adult in the household.
+Numadult takes the values between 1 and 45 in this data frame with lots of NAs that we would need to exclude from the analysis. We are interested in cases with 1 adult in the household.
 
-Also, we should only consider the households with one adult and no children in them - the categorical variable 'X_chldcnt', Computed Number Of Children In Household, is handy here. 
+Also, we should only consider the households with one adult and no children in them - the categorical variable **'X_chldcnt'**, Computed Number Of Children In Household, is handy here. 
 ```{r}
 brfss2013 %>%
   filter(X_chldcnt == "No children in household", !is.na(numadult)) %>%
@@ -198,7 +283,8 @@ brfss2013 %>%
   summarise(n())
 ```
 
-This var takes values from Every Day to Some days to Not at all. For this test, we would consider person a smoker if s/he smokes every day or some days. There's a calculated value in this data frame that counts all smokers and non-smokers for us, X_rfsmok3. We'll be using this variable in future analysis.
+This var takes values from Every Day to Some days to Not at all. For this test, we would consider a person a smoker if s/he smokes every day or some days. There's a calculated value in this data frame that counts all smokers and non-smokers for us, **X_rfsmok3**. We'll be using this variable in future analysis.
+
 ```{r}
 brfss2013 %>%
   group_by(smokday2) %>%
@@ -214,7 +300,7 @@ brfss2013 %>%
 
 
 *Step 2*  
-Here's the summary showing the relationship between the smokers (X_rfsmok3) and number of adults in the household (numadult).
+Here's the summary showing the relationship between the smokers (X_rfsmok3) and the number of adults in a household (numadult).
 
 ```{r}
 brfss2013 %>%
@@ -226,11 +312,10 @@ We're only interested in households with 1 adult with no children. Those househo
 
 ```{r}
 brfss2013 <- brfss2013 %>%
-  filter(!is.na(numadult), !is.na(X_chldcnt)) %>%
   mutate(home_alone = ifelse(numadult == 1, ifelse(X_chldcnt == "No children in household", TRUE, FALSE), FALSE)) 
 ```
 
-The following code calculate the values needed for the contingency table.
+The following code calculates the values needed for the contingency table.
 
 ```{r}
 # Create a contingency table with two categorical vars:
@@ -253,13 +338,13 @@ colSums(smokers_tab1)
 
 
 *Step 3*  
-We can now find if proportion of **smokers living alone** exceeds the proportions of **non-smokers living alone**.
+We can now find if a proportion of **smokers living alone** exceeds a proportion of **non-smokers living alone**.
 
 ```{r}
 prop.table(smokers_tab1, margin = 1)*100
 ```
 
-Indeed, we can see that 34.35% of smokers live alone against 32.12% of non-smokers living alone. 
+Indeed, we can see that 34.33% of smokers live alone against 32.07% of non-smokers living alone. 
 
 Taking the other way around, we can check if a random person being **the only member of his or her household** has a higher chance of **being a smoker**, than has a person living with somebody. Since we already have all of the values from a contingency table, it's quite easy to calculate:
 
@@ -267,7 +352,7 @@ Taking the other way around, we can check if a random person being **the only me
 prop.table(smokers_tab1, margin = 2)*100
 ```
 
-Again, we can see a higher chance of living alone and being a smoker, than living with somebody and being a smoker: 14.86% and 13.63% respectively.
+Again, we can see a higher chance of living alone and being a smoker, than living with somebody and being a smoker: 14.86% and 13.61% respectively.
 
-*Conclusion*
-We found out that an average smoker has 2.23% higher chance of living alone, than non-smoker. Also, an average person livig alone has 1.23% higher chance of being a smoker than one living with somebody. This makes sense but doesn't mean that these two factors are really connected. There might be a confounding variable affecting both of them instead. Anyway, **the answer to the question 3 is YES**.
+**Conclusion**  
+We found out that an average smoker has a 2.26% higher chance of living alone, than a non-smoker. Also, an average person living alone has 1.25% higher chance of being a smoker than one living with somebody. This makes sense but doesn't mean that these two factors are really connected. There might be a confounding variable affecting both of them instead. Anyway, **the answer to question 3 is YES**.
