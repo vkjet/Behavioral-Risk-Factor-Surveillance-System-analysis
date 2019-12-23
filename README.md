@@ -28,4 +28,4 @@ We often blame the younger generation for not sticking to a healthier lifestyle.
 
 That would be fun to know if there's an association between living alone and smoking. If there's an association, would that mean that smoking leads you to live alone or vice versa? Not really. Association doesn't mean causation. For the sake of this test, I suspect that being a smoker (explanatory variable) might affect your tendency of being the only person in your household or living with somebody (response variable).  
 
-[See an HTML version of the R project here](https://vkjet.github.io/Behavioral-Risk-Factor-Surveillance-System-analysis/intro_data_prob_project.html)
+[See an HTML version of the R project here](http://vkjet.github.io/Behavioral-Risk-Factor-Surveillance-System-analysis/intro_data_prob_project.html)
